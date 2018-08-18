@@ -1,4 +1,4 @@
-/*
+/* @license
   backgrid
   http://github.com/cloudflare/backgrid
 
@@ -39,6 +39,35 @@ function lpad(str, length, padstr) {
   return padding + str;
 }
 
+  function getModelNestedValue(model, field) {
+    var parts, val;
+    if (typeof field === 'string' && field.indexOf('.') > 0) {
+      parts = field.split('.');
+      val = model.get(parts.shift());
+      while (parts.length > 0) {
+        val = val[parts.shift()];
+      }
+    } else {
+      val = model.get(field);
+    }
+    return val;
+  }
+
+  function setModelNestedValue(model, field, value) {
+    var parts, val, nested;
+    if (typeof field === 'string' && field.indexOf('.') > 0) {
+      parts = field.split('.');
+      field = parts.shift();
+      nested = val = model.get(field);
+      while (parts.length > 1) {
+        val = val[parts.shift()];
+      }
+      val[parts.shift()] = value;
+      model.set(field, nested);
+    } else {
+      model.set(field, value);
+    }
+  }
 var $ = Backbone.$;
 
 var Backgrid = {

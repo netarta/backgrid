@@ -98,9 +98,11 @@ var InputCellEditor = Backgrid.InputCellEditor = CellEditor.extend({
      exists.
   */
   render: function () {
-    var model = this.model;
-    this.$el.val(this.formatter.fromRaw(model.get(this.column.get("name")), model));
-    return this;
+      var model = this.model;
+      var columnName = this.column.get('name');
+      var val = getModelNestedValue(model, columnName);
+      this.$el.val(this.formatter.fromRaw(val, model));
+      return this;
   },
 
   /**
@@ -141,7 +143,8 @@ var InputCellEditor = Backgrid.InputCellEditor = CellEditor.extend({
         model.trigger("backgrid:error", model, column, val);
       }
       else {
-        model.set(column.get("name"), newValue);
+        // model.set(column.get("name"), newValue);
+        setModelNestedValue(model, column.get("name"), newValue);
         model.trigger("backgrid:edited", model, column, command);
       }
     }
@@ -269,7 +272,8 @@ var Cell = Backgrid.Cell = Backbone.View.extend({
     $el.empty();
     var model = this.model;
     var columnName = this.column.get("name");
-    $el.text(this.formatter.fromRaw(model.get(columnName), model));
+    var val = getModelNestedValue(model, columnName);
+    $el.text(this.formatter.fromRaw(val, model));
     $el.addClass(columnName);
     this.updateStateClassesMaybe();
     this.delegateEvents();
@@ -408,13 +412,16 @@ var UriCell = Backgrid.UriCell = Cell.extend({
 
   render: function () {
     this.$el.empty();
-    var rawValue = this.model.get(this.column.get("name"));
+    var columnName = this.column.get('name');
+    var rawValue = getModelNestedValue(this.model, columnName);
     var formattedValue = this.formatter.fromRaw(rawValue, this.model);
     this.$el.append($("<a>", {
-      tabIndex: -1,
-      href: rawValue,
-      title: this.title || formattedValue,
-      target: this.target
+      tabIndex : -1,
+      href : rawValue,
+      'data-link' : "true",
+      rel : "noopener noreferrer",
+      title : this.title || formattedValue,
+      target : this.target
     }).text(formattedValue));
     this.delegateEvents();
     return this;
@@ -440,7 +447,9 @@ var EmailCell = Backgrid.EmailCell = StringCell.extend({
   render: function () {
     this.$el.empty();
     var model = this.model;
-    var formattedValue = this.formatter.fromRaw(model.get(this.column.get("name")), model);
+      var columnName = this.column.get('name');
+      var rawValue = getModelNestedValue(model, columnName);
+      var formattedValue = this.formatter.fromRaw(rawValue, model);
     this.$el.append($("<a>", {
       tabIndex: -1,
       href: "mailto:" + formattedValue,
@@ -683,10 +692,12 @@ var BooleanCellEditor = Backgrid.BooleanCellEditor = CellEditor.extend({
      uncheck otherwise.
   */
   render: function () {
-    var model = this.model;
-    var val = this.formatter.fromRaw(model.get(this.column.get("name")), model);
-    this.$el.prop("checked", val);
-    return this;
+      var model = this.model;
+      var columnName = this.column.get('name');
+      var val = getModelNestedValue(model, columnName);
+      var checked = this.formatter.fromRaw(val, model);
+      this.$el.prop("checked", checked);
+      return this;
   },
 
   /**
@@ -723,12 +734,14 @@ var BooleanCellEditor = Backgrid.BooleanCellEditor = CellEditor.extend({
       e.preventDefault();
       e.stopPropagation();
       var val = formatter.toRaw($el.prop("checked"), model);
-      model.set(column.get("name"), val);
+      setModelNestedValue(model, column.get("name"), val);
+      // model.set(column.get("name"), val);
       model.trigger("backgrid:edited", model, column, command);
     }
     else if (e.type == "change") {
       var val = formatter.toRaw($el.prop("checked"), model);
-      model.set(column.get("name"), val);
+      setModelNestedValue(model, column.get("name"), val);
+      // model.set(column.get("name"), val);
       $el.focus();
     }
   }
@@ -762,11 +775,13 @@ var BooleanCell = Backgrid.BooleanCell = Cell.extend({
   render: function () {
     this.$el.empty();
     var model = this.model, column = this.column;
+      var columnName = this.column.get('name');
+      var val = getModelNestedValue(model, columnName);
     var editable = Backgrid.callByNeed(column.editable(), column, model);
     this.$el.append($("<input>", {
       tabIndex: -1,
       type: "checkbox",
-      checked: this.formatter.fromRaw(model.get(column.get("name")), model),
+        checked : this.formatter.fromRaw(val, model),
       disabled: !editable
     }));
     this.delegateEvents();
@@ -838,10 +853,12 @@ var SelectCellEditor = Backgrid.SelectCellEditor = CellEditor.extend({
 
     var optionValues = _.result(this, "optionValues");
     var model = this.model;
-    var selectedValues = this.formatter.fromRaw(model.get(this.column.get("name")), model);
-
-    if (!_.isArray(optionValues)) throw new TypeError("optionValues must be an array");
-
+      var columnName = this.column.get('name');
+      var val = getModelNestedValue(model, columnName);
+      var selectedValues = this.formatter.fromRaw(val, model);
+      if (!_.isArray(optionValues)) {
+        throw new TypeError("optionValues must be an array");
+      }
     var optionValue = null;
     var optionText = null;
     var optionValue = null;
@@ -883,7 +900,8 @@ var SelectCellEditor = Backgrid.SelectCellEditor = CellEditor.extend({
   save: function (e) {
     var model = this.model;
     var column = this.column;
-    model.set(column.get("name"), this.formatter.toRaw(this.$el.val(), model));
+    // model.set(column.get("name"), this.formatter.toRaw(this.$el.val(), model));
+    setModelNestedValue(model, column.get("name"), this.formatter.toRaw(this.$el.val(), model));
   },
 
   /**
@@ -992,8 +1010,9 @@ var SelectCell = Backgrid.SelectCell = Cell.extend({
 
     var optionValues = _.result(this, "optionValues");
     var model = this.model;
-    var rawData = this.formatter.fromRaw(model.get(this.column.get("name")), model);
-
+      var columnName = this.column.get('name');
+      var val = getModelNestedValue(model, columnName);
+      var rawData = this.formatter.fromRaw(val, model);
     var selectedText = [];
 
     try {

@@ -159,3 +159,57 @@ var EmptyRow = Backgrid.EmptyRow = Backbone.View.extend({
     return this;
   }
 });
+
+  var SelectableRow = Backgrid.SelectableRow = Row.extend({
+    focusedBgColor : '#F0FFFF',
+    selectedBgColor : '#FFFFF0',
+    events : {
+      'click' : 'onClick',
+      'contextmenu' : 'onRightClick'
+    },
+    onClick : function(evt) {
+      var $el = this.$el;
+      var selectedBgColor = this.selectedBgColor;
+      if ($el.attr('data-row-focused')) {
+        return;
+      }
+      var drf = $el.css('data-row-selected') || $el.css('background-color') || 'transparent';
+      $el.attr('data-row-focused', drf).css('background-color', this.focusedBgColor);
+      $el.siblings().each(function() {
+        var $this = $(this);
+        var _drf = $this.attr('data-row-focused') || '';
+        var _drs = $this.attr('data-row-selected') || '';
+        if (_drf) {
+          if (_drs) {
+            $this.css('background-color', selectedBgColor);
+          } else {
+            $this.css('background-color', _drf);
+          }
+          $this.removeAttr('data-row-focused');
+
+        }
+      });
+    },
+    onRightClick : function(evt) {
+      var $el, drs, drf;
+      evt.preventDefault();
+      evt.stopPropagation();
+      $el = this.$el;
+      drf = $el.attr('data-row-focused') || '';
+      drs = $el.attr('data-row-selected') || '';
+      if (drs) {
+        if (drf) {
+          $el.css('background-color', this.focusedBgColor);
+        } else {
+          $el.css('background-color', drs);
+        }
+        $el.removeAttr('data-row-selected');
+        return;
+      }
+      drs = $el.css('data-row-focused') || $el.css('background-color') || 'transparent';
+      $el.attr('data-row-selected', drs);
+      if (!drf) {
+        $el.css('background-color', this.selectedBgColor);
+      }
+    }
+  });

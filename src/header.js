@@ -128,6 +128,10 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
     this.$el.append(label);
     this.$el.addClass(column.get("name"));
     this.$el.addClass(column.get("direction"));
+      var style = column.get("style");
+      if (style) {
+        this.$el.css(style);
+      }
     this.delegateEvents();
     return this;
   }

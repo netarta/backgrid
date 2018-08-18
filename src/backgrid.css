@@ -1,4 +1,4 @@
-/*
+/* @license
   backgrid
   http://github.com/cloudflare/backgrid
 
@@ -17,6 +17,7 @@
 }
 
 .backgrid {
+  table-layout: fixed;  
   width: 100%;
   max-width: 100%;
   background-color: transparent;
